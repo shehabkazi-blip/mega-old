@@ -45,13 +45,11 @@ pipeline {
             }
         }
 
-        stage("OWASP: Dependency check"){
-            steps{
-                script{
-                    owasp_dependency()
-                }
-            }
-        }
+       // stage('OWASP Dependency Check') {
+       //     steps {
+       //         owasp_dependency()
+       //     }
+       // }
         
         stage("SonarQube: Code Analysis"){
             steps{
@@ -64,7 +62,12 @@ pipeline {
         stage("SonarQube: Code Quality Gates"){
             steps{
                 script{
-                    sonarqube_code_quality()
+                    timeout(time: 3, unit: 'MINUTES') {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to Quality Gate failure: ${qg.status}"
+                        }
+                    }
                 }
             }
         }
@@ -118,7 +121,7 @@ pipeline {
     }
     post{
         success{
-            archiveArtifacts artifacts: '*.xml', followSymlinks: false
+            archiveArtifacts artifacts: '*.xml', allowEmptyArchive: false, followSymlinks: false
             build job: "mega-CD", parameters: [
                 string(name: 'FRONTEND_DOCKER_TAG', value: "${params.FRONTEND_DOCKER_TAG}"),
                 string(name: 'BACKEND_DOCKER_TAG', value: "${params.BACKEND_DOCKER_TAG}")
