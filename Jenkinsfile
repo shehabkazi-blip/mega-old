@@ -1,8 +1,8 @@
 @Library('Shared') _
 pipeline {
-    agent {label 'Node'} # agent any; if you are running Jenkins on one (master) machine
+    agent { label 'Node' } // agent any; if you are running Jenkins on one (master) machine
     
-    environment{
+    environment {
         SONAR_HOME = tool "Sonar"
     }
     
@@ -32,7 +32,7 @@ pipeline {
         stage('Git: Code Checkout') {
             steps {
                 script{
-                    code_checkout("https://github.com/bongodev/mega.git","main")
+                    code_checkout("https://github.com/shehabkazi-blip/mega-old","main")
                 }
             }
         }
@@ -96,13 +96,13 @@ pipeline {
         stage("Docker: Build Images"){
             steps{
                 script{
-                        dir('backend'){
-                            docker_build("mega-backend-beta","${params.BACKEND_DOCKER_TAG}","bongodev")
-                        }
+                    dir('backend'){
+                        docker_build("mega-backend-beta","${params.BACKEND_DOCKER_TAG}","bongodev")
+                    }
                     
-                        dir('frontend'){
-                            docker_build("mega-frontend-beta","${params.FRONTEND_DOCKER_TAG}","bongodev")
-                        }
+                    dir('frontend'){
+                        docker_build("mega-frontend-beta","${params.FRONTEND_DOCKER_TAG}","bongodev")
+                    }
                 }
             }
         }

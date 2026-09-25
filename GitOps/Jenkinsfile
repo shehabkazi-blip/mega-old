@@ -1,6 +1,6 @@
 @Library('Shared') _
 pipeline {
-    agent {label 'Node'} # agent any; if you are running Jenkins on one (master) machine
+    agent { label 'Node' } // agent any; if you are running Jenkins on one (master) machine
     
     parameters {
         string(name: 'FRONTEND_DOCKER_TAG', defaultValue: '', description: 'Frontend Docker tag of the image built by the CI job')
@@ -19,7 +19,7 @@ pipeline {
         stage('Git: Code Checkout') {
             steps {
                 script{
-                    code_checkout("https://github.com/bongodev/mega.git","main")
+                    code_checkout("https://github.com/shehabkazi-blip/mega-old","main")
                 }
             }
         }
@@ -33,22 +33,15 @@ pipeline {
             }
         }
         
-        
         stage("Update: Kubernetes manifests"){
             steps{
                 script{
                     dir('kubernetes'){
                         sh """
                             sed -i -e s/mega-backend-beta.*/mega-backend-beta:${params.BACKEND_DOCKER_TAG}/g backend.yaml
-                        """
-                    }
-                    
-                    dir('kubernetes'){
-                        sh """
                             sed -i -e s/mega-frontend-beta.*/mega-frontend-beta:${params.FRONTEND_DOCKER_TAG}/g frontend.yaml
                         """
                     }
-                    
                 }
             }
         }
@@ -58,28 +51,30 @@ pipeline {
                 script{
                     withCredentials([gitUsernamePassword(credentialsId: 'Github-cred', gitToolName: 'Default')]) {
                         sh '''
-                        echo "Checking repository status: "
-                        git status
-                    
-                        echo "Adding changes to git: "
-                        git add .
+                            git config user.email "shehabkazi@gmail.com"
+                            git config user.name "Jenkins CI"
+                            
+                            echo "Checking repository status: "
+                            git status
                         
-                        echo "Commiting changes: "
-                        git commit -m "Updated environment variables"
-                        
-                        echo "Pushing changes to github: "
-                        git push https://github.com/bongodev/mega.git main
-                    '''
+                            echo "Adding changes to git: "
+                            git add .
+                            
+                            echo "Commiting changes: "
+                            git commit -m "Updated image tags: FE=${FRONTEND_DOCKER_TAG}, BE=${BACKEND_DOCKER_TAG}" || echo "No changes to commit"
+                            
+                            echo "Pushing changes to github: "
+                            git push origin main
+                        '''
                     }
                 }
             }
         }
     }
-  post {
+    post {
         success {
             script {
                 emailext attachLog: true,
-                from: 'bongodevbootcamp@gmail.com',
                 subject: "Mega project Application has been updated and deployed - '${currentBuild.result}'",
                 body: """
                     <html>
@@ -95,15 +90,14 @@ pipeline {
                         </div>
                     </body>
                     </html>
-            """,
-            to: 'bongodevbootcamp@gmail.com',
-            mimeType: 'text/html'
+                """,
+                to: 'shehabkazi@gmail.com',
+                mimeType: 'text/html'
             }
         }
-      failure {
+        failure {
             script {
                 emailext attachLog: true,
-                from: 'bongodevbootcamp@gmail.com',
                 subject: "MegaProject Application build failed - '${currentBuild.result}'",
                 body: """
                     <html>
@@ -116,9 +110,9 @@ pipeline {
                         </div>
                     </body>
                     </html>
-            """,
-            to: 'bongodevbootcamp@gmail.com',
-            mimeType: 'text/html'
+                """,
+                to: 'shehabkazi@gmail.com',
+                mimeType: 'text/html'
             }
         }
     }
